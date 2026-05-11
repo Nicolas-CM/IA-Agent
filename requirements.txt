@@ -1,0 +1,12 @@
+langchain
+langchain-google-genai
+google-generativeai
+supabase
+langchain-community
+langchain-core
+langchain-text-splitters
+ragas
+langsmith
+python-dotenv
+pypdf
+tiktoken

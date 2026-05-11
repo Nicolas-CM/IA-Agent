@@ -1,0 +1,13 @@
+# Inteligencia Artificial Generativa y RAG
+
+La Inteligencia Artificial Generativa se refiere a modelos que pueden crear nuevo contenido, como texto, imágenes o código.
+
+El RAG (Retrieval-Augmented Generation) es una técnica que combina la potencia de los modelos de lenguaje con datos externos actualizados. 
+
+Beneficios de RAG:
+1. Reducción de alucinaciones: El modelo se basa en hechos recuperados.
+2. Conocimiento actualizado: No depende solo de la fecha de entrenamiento.
+3. Privacidad: Permite usar datos locales sin re-entrenar el modelo.
+
+LangChain es el framework líder para construir estas aplicaciones, permitiendo conectar LLMs con bases de datos vectoriales como Supabase.
+Supabase utiliza pgvector para almacenar y buscar vectores de manera eficiente en una base de datos PostgreSQL.

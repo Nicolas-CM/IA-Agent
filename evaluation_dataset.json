@@ -1,0 +1,23 @@
+{
+  "description": "Dataset de evaluación para el sistema RAG basado en el contenido de conocimiento.txt",
+  "examples": [
+    {
+      "question": "What is RAG?",
+      "ground_truth": "RAG (Retrieval-Augmented Generation) is a technique that combines the power of language models with external updated data."
+    },
+    {
+      "question": "What are the benefits of RAG?",
+      "ground_truth": "The benefits of RAG include: 1) Reduction of hallucinations as the model is based on retrieved facts, 2) Updated knowledge that doesn't depend only on training date, 3) Privacy by allowing use of local data without retraining the model."
+    },
+    {
+      "question": "What is LangChain?",
+      "ground_truth": "LangChain is the leading framework for building LLM applications, allowing connection of LLMs with vector databases like Supabase."
+    }
+  ],
+  "instructions": [
+    "1. Este dataset está basado en el contenido de conocimiento.txt",
+    "2. Las preguntas son relevantes al contenido sobre RAG y LangChain",
+    "3. Puedes agregar más preguntas basadas en tu contenido específico",
+    "4. El sistema generará respuestas automáticamente y las comparará con ground_truth"
+  ]
+}
