@@ -1,9 +1,8 @@
 # Agente RAG con LangChain, Supabase y Ragas
 
-Sistema de Retrieval-Augmented Generation (RAG) con monitoreo y evaluación automática.
+Sistema de Retrieval-Augmented Generation (RAG) con interfaz conversacional, monitoreo y evaluación automática.
 
-## 🏗️ Arquitectura
-
+## 🏗️ Arquitectura del Proyecto
 ```
 ┌─────────────┐      ┌──────────────┐      ┌─────────────┐
 │  Wikipedia  │─────▶│   Supabase   │◀─────│ Query Agent │
@@ -16,33 +15,50 @@ Sistema de Retrieval-Augmented Generation (RAG) con monitoreo y evaluación auto
                                            │   (Ragas)   │
                                            └─────────────┘
 ```
+```
+Agente/
+├── ingest/                  # Scripts de ingesta de datos
+│   ├── ingest.py            # Ingesta de conocimiento.txt
+│   ├── ingest_wikitext.py   # Ingesta de Wikipedia
+│   └── conocimiento.txt     # Datos de ejemplo locales
+├── evaluate/                # Scripts de evaluación y consulta
+│   ├── query_agent.py       # Agente de consultas (CLI)
+│   ├── evaluate.py          # Evaluación manual
+│   ├── evaluate_with_json.py # Evaluación con JSON
+│   ├── evaluate_synthetic.py # Evaluación sintética
+│   └── evaluation_dataset.json # Dataset de prueba
+├── ui/                      # Interfaz de usuario
+│   └── app.py               # Front-end con Streamlit
+├── docs/                    # Documentación adicional
+├── .env                     # Variables de entorno
+├── GEMINI.md                # Guía rápida para agentes AI
+└── requirements.txt         # Dependencias
+```
 
 ## 📋 Requisitos
 
 - Python 3.10+
 - Cuenta de Supabase (con pgvector habilitado)
-- API Key de Google Gemini
+- API Key de Google Gemini (modelo gemini-2.5-flash)
 - API Key de LangSmith (opcional, para monitoreo)
 
-## 🚀 Instalación
+## 🚀 Instalación y Configuración
 
-1. **Clonar y configurar entorno virtual:**
-```bash
-python -m venv venv
-source venv/bin/activate  # En Windows: venv\Scripts\activate
-pip install -r requirements.txt
-```
+1. **Entorno Virtual:**
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # Windows: venv\Scripts\activate
+   pip install -r requirements.txt
+   ```
 
-2. **Configurar variables de entorno:**
-Crea un archivo `.env` con:
-```env
-GOOGLE_API_KEY=tu_api_key_de_google
-LANGCHAIN_TRACING_V2=true
-LANGCHAIN_PROJECT=agente-rag-supabase
-LANGCHAIN_API_KEY=tu_api_key_de_langsmith
-SUPABASE_URL=tu_url_de_supabase
-SUPABASE_SERVICE_KEY=tu_service_key_de_supabase
-```
+2. **Variables de Entorno (.env):**
+   ```env
+   GOOGLE_API_KEY=tu_api_key
+   SUPABASE_URL=tu_url
+   SUPABASE_SERVICE_KEY=tu_service_key
+   LANGCHAIN_TRACING_V2=true
+   LANGCHAIN_API_KEY=tu_api_key_langsmith
+   ```
 
 3. **Configurar Supabase:**
 Ejecuta este SQL en tu proyecto de Supabase:
@@ -91,196 +107,53 @@ WITH (lists = 100);
 
 ## 📖 Uso
 
-### 1. Ingestar Datos de Wikipedia
-
+### 1. Ingesta de Datos
+Para que el agente tenga conocimiento, primero debes poblar la base de datos:
 ```bash
-python ingest_wikitext.py
+python ingest/ingest.py           # Datos locales
+python ingest/ingest_wikitext.py  # Datos de Wikipedia
 ```
 
-Este script:
-- Descarga 20 artículos de WikiText-2
-- Los convierte en embeddings usando Google Gemini
-- Los almacena en Supabase
-
-### 2. Consultar el Agente RAG
-
+### 2. Interfaz de Chat (Recomendado) ⭐
+Para tener una conversación fluida con el agente a través del navegador:
 ```bash
-python query_agent.py
+streamlit run ui/app.py
 ```
 
-Realiza consultas sobre los datos almacenados. Puedes modificar la pregunta en el código.
+![Interfaz de Chat](docs/images/chat_ui.png)
 
-### 3. Evaluar el Sistema con Ragas
+#### Comportamiento del RAG:
+El sistema está diseñado para ser honesto y basarse solo en la información recuperada:
+*   **Con Conocimiento:** Cuando la base de datos contiene la información, el agente responde detalladamente basándose en los documentos.
+*   **Sin Conocimiento:** Si la pregunta no tiene relación con los datos ingestados, el agente informará que no tiene información al respecto para evitar alucinaciones.
 
-Tienes **3 opciones** para evaluar:
-
-#### Opción A: Dataset Manual (Recomendado para empezar)
-
+### 3. Consulta por Consola
+Para una prueba rápida en la terminal:
 ```bash
-python evaluate.py
+python evaluate/query_agent.py
 ```
 
-Usa preguntas hardcodeadas en el código. Debes editar las preguntas y ground_truth según tu contenido.
-
-#### Opción B: Dataset desde JSON (Más flexible) ⭐
-
+### 4. Evaluación del Sistema
+Mide la calidad de las respuestas (Fidelidad, Relevancia, etc.):
 ```bash
-python evaluate_with_json.py
+python evaluate/evaluate_with_json.py
 ```
 
-1. Edita `evaluation_dataset.json` con tus preguntas y respuestas esperadas
-2. Ejecuta el script
-3. El sistema genera respuestas automáticamente y las compara con ground_truth
+## 📊 Monitoreo con LangSmith
+Si configuraste LangSmith, puedes observar paso a paso cómo el sistema recupera la información y genera la respuesta.
 
-**Ejemplo de `evaluation_dataset.json`:**
-```json
-{
-  "examples": [
-    {
-      "question": "What is machine learning?",
-      "ground_truth": "Machine learning is a subset of AI that enables systems to learn from data."
-    }
-  ]
-}
-```
+### Traza con Información en RAG
+Se observa cómo el sistema identifica documentos relevantes y los utiliza como contexto:
+![Traza con Conocimiento](docs/images/traza_conocimiento_en_rag.png)
 
-#### Opción C: Generación Sintética con Ragas
+### Traza sin Información en RAG
+Se observa que al no encontrar documentos con suficiente similitud, el sistema no entrega contexto al LLM o el LLM identifica la falta de datos:
+![Traza sin Conocimiento](docs/images/traza_sin_conocimiento_en_rag.png)
 
-Descomenta la sección en `evaluate.py` para que Ragas genere preguntas automáticamente desde tus documentos.
-
-**Métricas evaluadas:**
-- **Faithfulness**: ¿La respuesta es fiel al contexto recuperado?
-- **Answer Relevancy**: ¿La respuesta es relevante a la pregunta?
-- **Context Precision**: ¿Los contextos recuperados son precisos?
-- **Context Recall**: ¿Se recuperaron todos los contextos relevantes?
-
-## 📁 Estructura del Proyecto
-
-```
-Agente/
-├── ingest.py                  # Ingesta de documentos locales (conocimiento.txt)
-├── ingest_wikitext.py         # Ingesta de Wikipedia
-├── query_agent.py             # Agente de consultas RAG
-├── evaluate.py                # Evaluación con dataset manual
-├── evaluate_with_json.py      # Evaluación con dataset JSON (recomendado)
-├── evaluation_dataset.json    # Dataset de preguntas y ground truth
-├── check_models.py            # Utilidad para verificar modelos de Google
-├── conocimiento.txt           # Datos de ejemplo locales
-├── requirements.txt           # Dependencias
-├── .env                       # Variables de entorno (NO SUBIR A GIT)
-├── .env.example              # Plantilla de configuración
-├── .gitignore                # Archivos a ignorar en Git
-└── README.md                 # Este archivo
-```
-
-## 🔍 Flujo de Trabajo
-
-### Opción A: Usar datos de Wikipedia (Recomendado para evaluación)
-
-```bash
-# 1. Ingestar datos de Wikipedia
-python ingest_wikitext.py
-
-# 2. Personalizar el dataset de evaluación
-# Edita evaluation_dataset.json con preguntas relevantes a tu contenido
-
-# 3. Evaluar con Ragas
-python evaluate_with_json.py
-```
-
-### Opción B: Usar datos locales
-
-```bash
-# 1. Ingestar conocimiento.txt
-python ingest.py
-
-# 2. Consultar
-python query_agent.py
-
-# 3. Evaluar (ajusta las preguntas en evaluate.py)
-python evaluate.py
-```
-
-## 📊 Métricas de Ragas
-
-- **Faithfulness (0-1)**: Mide si la respuesta está fundamentada en el contexto recuperado
-- **Answer Relevancy (0-1)**: Mide qué tan relevante es la respuesta a la pregunta
-- **Context Precision (0-1)**: Mide la precisión de los contextos recuperados
-
-Valores más cercanos a 1 indican mejor rendimiento.
-
-## 🔧 Personalización
-
-### Cambiar las preguntas de evaluación
-
-Edita `evaluate.py` línea 44:
-```python
-test_questions = [
-    "Tu pregunta 1",
-    "Tu pregunta 2",
-    "Tu pregunta 3"
-]
-```
-
-### Ajustar el número de contextos recuperados
-
-En `evaluate.py` línea 38:
-```python
-retriever = vector_store.as_retriever(search_kwargs={"k": 3})  # Cambia el 3
-```
-
-### Cambiar el modelo LLM
-
-En cualquier archivo:
-```python
-llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash")  # Cambia el modelo
-```
-
-## 📈 Monitoreo con LangSmith
-
-Si configuraste LangSmith en el `.env`, todas las ejecuciones se registrarán automáticamente en:
-https://smith.langchain.com/
-
-Podrás ver:
-- Trazas de ejecución
-- Latencias
-- Tokens consumidos
-- Errores
-
-## 🛠️ Utilidades
-
-### Verificar modelos disponibles de Google
-
-```bash
-python check_models.py
-```
+Podrás ver estas trazas en tiempo real en: [smith.langchain.com](https://smith.langchain.com/)
 
 ## 🔒 Seguridad
+Nunca compartas tu archivo `.env`. Asegúrate de que esté incluido en el `.gitignore`.
 
-⚠️ **IMPORTANTE**: Nunca subas el archivo `.env` a Git. Crea un `.gitignore`:
-
-```gitignore
-.env
-venv/
-__pycache__/
-*.pyc
-*.pyo
-.DS_Store
-```
-
-## 📚 Stack Tecnológico
-
-- **LangChain**: Framework para aplicaciones LLM
-- **Supabase**: Base de datos vectorial (PostgreSQL + pgvector)
-- **Google Gemini**: LLM y embeddings
-- **LangSmith**: Monitoreo y observabilidad
-- **Ragas**: Evaluación de sistemas RAG
-- **WikiText**: Dataset de Wikipedia
-
-## 🤝 Contribuciones
-
-Este es un proyecto académico para el curso de IA2 - Universidad Icesi.
-
-## 📝 Licencia
-
-MIT
+---
+*Este proyecto fue organizado para soportar flujos RAG completos: Ingesta -> Conversación -> Evaluación.*
