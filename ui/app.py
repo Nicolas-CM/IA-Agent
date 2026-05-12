@@ -146,7 +146,9 @@ def get_agent_executor():
         [
             (
                 "system",
-                "Eres un asistente experto con acceso a una base de conocimientos y herramientas de correo electrónico.",
+                "Eres un asistente experto. Tu objetivo es ayudar al usuario de forma concisa y profesional. "
+                "Cuando uses herramientas, resume el resultado final de forma natural. "
+                "IMPORTANTE: Responde SIEMPRE en texto plano, sin incluir estructuras de datos internas, firmas o metadatos.",
             ),
             MessagesPlaceholder(variable_name="chat_history"),
             ("human", "{input}"),
@@ -202,7 +204,22 @@ if user_input := st.chat_input("¿En qué puedo ayudarte hoy?"):
                     executor.ainvoke({"input": user_input, "chat_history": history})
                 )
 
-                final_text = response["output"]
+                # Limpieza de la respuesta para evitar mostrar metadatos/diccionarios
+                raw_output = response["output"]
+                
+                if isinstance(raw_output, list):
+                    clean_parts = []
+                    for part in raw_output:
+                        if isinstance(part, dict) and "text" in part:
+                            clean_parts.append(part["text"])
+                        elif isinstance(part, str):
+                            clean_parts.append(part)
+                    final_text = "".join(clean_parts)
+                elif isinstance(raw_output, dict) and "text" in raw_output:
+                    final_text = raw_output["text"]
+                else:
+                    final_text = str(raw_output)
+
                 st.markdown(final_text)
                 st.session_state.messages.append(AIMessage(content=final_text))
             except Exception as e:
