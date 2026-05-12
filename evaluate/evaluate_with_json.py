@@ -18,6 +18,11 @@ def load_evaluation_dataset(json_path="evaluation_dataset.json"):
     """
     Carga el dataset de evaluación desde un archivo JSON
     """
+    # Asegurar que encuentre el archivo si se corre desde la raíz
+    if not os.path.exists(json_path):
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        json_path = os.path.join(base_dir, json_path)
+        
     print(f"📂 Cargando dataset desde: {json_path}")
     
     with open(json_path, 'r', encoding='utf-8') as f:
@@ -131,11 +136,14 @@ def evaluate_with_dataset(json_path="evaluation_dataset.json"):
     print("="*80)
     print(result)
     
-    print("\n📈 Métricas Detalladas:")
-    print(f"  • Faithfulness (Fidelidad):        {result.get('faithfulness', 0):.4f}")
-    print(f"  • Answer Relevancy (Relevancia):   {result.get('answer_relevancy', 0):.4f}")
-    print(f"  • Context Precision (Precisión):   {result.get('context_precision', 0):.4f}")
-    print(f"  • Context Recall (Recuperación):   {result.get('context_recall', 0):.4f}")
+    # Mostrar métricas individuales
+    print("\n📊 Métricas Detalladas:")
+    # Ragas EvaluationResult puede comportarse como un diccionario o tener los valores en .scores
+    # Usamos la forma más segura de acceder a los resultados
+    print(f"  • Faithfulness (Fidelidad):        {result['faithfulness']:.4f}")
+    print(f"  • Answer Relevancy (Relevancia):   {result['answer_relevancy']:.4f}")
+    print(f"  • Context Precision (Precisión):   {result['context_precision']:.4f}")
+    print(f"  • Context Recall (Recuperación):   {result['context_recall']:.4f}")
     
     print("\n💡 Interpretación:")
     print("  - Valores cercanos a 1.0 = Excelente rendimiento")
@@ -144,10 +152,10 @@ def evaluate_with_dataset(json_path="evaluation_dataset.json"):
     
     # Calcular promedio
     avg_score = sum([
-        result.get('faithfulness', 0),
-        result.get('answer_relevancy', 0),
-        result.get('context_precision', 0),
-        result.get('context_recall', 0)
+        result['faithfulness'],
+        result['answer_relevancy'],
+        result['context_precision'],
+        result['context_recall']
     ]) / 4
     
     print(f"\n🎯 Puntuación Promedio: {avg_score:.4f}")
