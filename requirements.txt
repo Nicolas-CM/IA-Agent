@@ -11,3 +11,5 @@ python-dotenv
 pypdf
 tiktoken
 streamlit
+mcp
+langchain-mcp-adapters
